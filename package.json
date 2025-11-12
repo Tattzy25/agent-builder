@@ -1,7 +1,33 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "ai-agent-builder",
+  "version": "0.1.1",
+  "description": "A production-ready visual workflow builder for AI SDK. Build powerful AI workflows with drag-and-drop nodes.",
   "private": true,
+  "author": "AI Agent Builder Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tattzy25/agent-builder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Tattzy25/agent-builder/issues"
+  },
+  "homepage": "https://github.com/Tattzy25/agent-builder#readme",
+  "keywords": [
+    "ai",
+    "ai-sdk",
+    "workflow",
+    "visual-programming",
+    "nextjs",
+    "react",
+    "openai",
+    "gemini",
+    "llm",
+    "agent-builder"
+  ],
+  "engines": {
+    "node": ">=18.17.0"
+  },
   "scripts": {
     "build": "next build",
     "dev": "next dev",
@@ -61,8 +87,8 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "vaul": "^0.9.9",
-    "zod": "3.25.67"
+    "vaul": "^1.1.2",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",

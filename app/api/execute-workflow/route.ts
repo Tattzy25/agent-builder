@@ -1,8 +1,14 @@
 import { generateText } from "ai"
 import { google } from "@ai-sdk/google"
 import type { Node, Edge } from "@xyflow/react"
+import { validateUrl, validateHttpMethod, sanitizeCodeInput } from "@/lib/validation"
 
 export const maxDuration = 30
+
+// Maximum nodes allowed in a workflow to prevent resource exhaustion
+const MAX_NODES = 50
+// Maximum edges allowed
+const MAX_EDGES = 100
 
 type ExecutionResult = {
   nodeId: string
@@ -40,6 +46,23 @@ export async function POST(req: Request) {
 
       try {
         const { nodes, edges }: { nodes: Node[]; edges: Edge[] } = await req.json()
+
+        // Validate workflow size to prevent resource exhaustion
+        if (!nodes || !Array.isArray(nodes)) {
+          throw new Error("Invalid workflow: nodes must be an array")
+        }
+        if (!edges || !Array.isArray(edges)) {
+          throw new Error("Invalid workflow: edges must be an array")
+        }
+        if (nodes.length > MAX_NODES) {
+          throw new Error(`Workflow exceeds maximum allowed nodes (${MAX_NODES})`)
+        }
+        if (edges.length > MAX_EDGES) {
+          throw new Error(`Workflow exceeds maximum allowed edges (${MAX_EDGES})`)
+        }
+        if (nodes.length === 0) {
+          throw new Error("Workflow must contain at least one node")
+        }
 
         // Build execution graph
         const nodeMap = new Map(nodes.map((node) => [node.id, node]))
@@ -171,6 +194,13 @@ export async function POST(req: Request) {
                 const conditionCode = String(node.data.condition || "true")
                 const conditionInputs = inputs
 
+                // Validate condition code for security
+                try {
+                  sanitizeCodeInput(conditionCode, 1000) // Shorter limit for conditions
+                } catch (sanitizeError: any) {
+                  throw new Error(`Conditional code validation failed: ${sanitizeError.message}`)
+                }
+
                 try {
                   const func = new Function(
                     "inputs",
@@ -205,6 +235,14 @@ export async function POST(req: Request) {
                 // Interpolate variables in URL
                 if (inputs.length > 0) {
                   url = interpolateVariables(url, inputs)
+                }
+
+                // Validate URL and method for security
+                try {
+                  url = validateUrl(url)
+                  validateHttpMethod(method)
+                } catch (validationError: any) {
+                  throw new Error(`HTTP Request validation failed: ${validationError.message}`)
                 }
 
                 const headers: Record<string, string> = {}
@@ -336,6 +374,13 @@ export async function POST(req: Request) {
                 const jsCode = String(node.data.code || "")
                 const jsInputs = inputs
 
+                // Validate and sanitize code for security
+                try {
+                  sanitizeCodeInput(jsCode)
+                } catch (sanitizeError: any) {
+                  throw new Error(`JavaScript code validation failed: ${sanitizeError.message}`)
+                }
+
                 try {
                   const func = new Function(
                     "inputs",
@@ -397,6 +442,15 @@ export async function POST(req: Request) {
 
               case "tool":
                 if (node.data.code) {
+                  const toolCode = String(node.data.code)
+                  
+                  // Validate tool code for security
+                  try {
+                    sanitizeCodeInput(toolCode)
+                  } catch (sanitizeError: any) {
+                    throw new Error(`Tool code validation failed: ${sanitizeError.message}`)
+                  }
+
                   try {
                     const toolInputs = inputs
                     const func = new Function(
@@ -406,7 +460,7 @@ export async function POST(req: Request) {
                       const input1 = inputs[0];
                       const input2 = inputs[1];
                       const input3 = inputs[2];
-                      ${node.data.code}
+                      ${toolCode}
                     `,
                     )
                     output = await func(toolInputs, {})

@@ -168,7 +168,7 @@ export async function POST(req: Request) {
                 break
 
               case "conditional":
-                const conditionCode = node.data.condition || "true"
+                const conditionCode = String(node.data.condition || "true")
                 const conditionInputs = inputs
 
                 try {
@@ -199,8 +199,8 @@ export async function POST(req: Request) {
                 break
 
               case "httpRequest":
-                let url = node.data.url || ""
-                const method = node.data.method || "GET"
+                let url = String(node.data.url || "")
+                const method = String(node.data.method || "GET")
 
                 // Interpolate variables in URL
                 if (inputs.length > 0) {
@@ -210,13 +210,13 @@ export async function POST(req: Request) {
                 const headers: Record<string, string> = {}
                 if (node.data.headers) {
                   try {
-                    Object.assign(headers, JSON.parse(node.data.headers))
+                    Object.assign(headers, JSON.parse(String(node.data.headers)))
                   } catch (e) {
                     console.error("Invalid headers JSON")
                   }
                 }
 
-                let body = node.data.body || ""
+                let body = String(node.data.body || "")
                 if (body && inputs.length > 0) {
                   body = interpolateVariables(body, inputs)
                 }
@@ -250,7 +250,7 @@ export async function POST(req: Request) {
                 break
 
               case "prompt":
-                const content = node.data.content || ""
+                const content = String(node.data.content || "")
                 output = inputs.length > 0 ? interpolateVariables(content, inputs) : content
                 executionLog.push({
                   nodeId,
@@ -260,14 +260,14 @@ export async function POST(req: Request) {
                 break
 
               case "textModel":
-                const prompt = inputs.length > 0 ? String(inputs[0]) : node.data.prompt || ""
+                const prompt = inputs.length > 0 ? String(inputs[0]) : String(node.data.prompt || "")
 
                 if (node.data.structuredOutput && node.data.schema) {
                   const textResult = await generateText({
-                    model: node.data.model || "openai/gpt-5",
+                    model: String(node.data.model || "openai/gpt-5"),
                     prompt: `${prompt}\n\nRespond in JSON format matching this schema: ${node.data.schema}`,
-                    temperature: node.data.temperature || 0.7,
-                    maxTokens: node.data.maxTokens || 2000,
+                    temperature: Number(node.data.temperature || 0.7),
+                    maxTokens: Number(node.data.maxTokens || 2000),
                   })
                   output = textResult.text
                   executionLog.push({
@@ -282,10 +282,10 @@ export async function POST(req: Request) {
                   })
                 } else {
                   const textResult = await generateText({
-                    model: node.data.model || "openai/gpt-5",
+                    model: String(node.data.model || "openai/gpt-5"),
                     prompt: prompt,
-                    temperature: node.data.temperature || 0.7,
-                    maxTokens: node.data.maxTokens || 2000,
+                    temperature: Number(node.data.temperature || 0.7),
+                    maxTokens: Number(node.data.maxTokens || 2000),
                   })
                   output = textResult.text
                   executionLog.push({
@@ -302,7 +302,7 @@ export async function POST(req: Request) {
               case "imageGeneration":
                 const imagePrompt = inputs.length > 0 ? String(inputs[0]) : ""
                 const imageResult = await generateText({
-                  model: google(node.data.model || "gemini-2.5-flash-image"),
+                  model: google(String(node.data.model || "gemini-2.5-flash-image")),
                   prompt: imagePrompt,
                 })
 
@@ -333,7 +333,7 @@ export async function POST(req: Request) {
                 break
 
               case "javascript":
-                const jsCode = node.data.code || ""
+                const jsCode = String(node.data.code || "")
                 const jsInputs = inputs
 
                 try {
